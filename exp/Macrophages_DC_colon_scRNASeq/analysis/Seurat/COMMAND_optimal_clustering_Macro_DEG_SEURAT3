@@ -1,0 +1,87 @@
+#!/usr/bin/bash
+
+#
+# description: compute the differential expression analysis between each clusters and all the other cells and between BPL+ and BLP- populations (cluster 1 and cluster 0)
+#              filter out genes that are not DEGs according to our criteria
+#
+# depends: COMMAND_optimal_clustering_Macro_SEURAT3
+#
+
+
+#### global paths and scripts ####
+
+SCRIPT_DIR="../../../../scripts/R/seurat3_scripts/"
+
+DEGS_ALL="$SCRIPT_DIR/DEG.R"
+DEGS="$SCRIPT_DIR/DEGsingleComparison_20200211.R"
+FILTER="$SCRIPT_DIR/filter_DEGs.R"
+
+
+#### parameters ####
+
+# ID: parameter set from opt_cl_stat_BM_dist0.5-0.7_prox0-0.4.tsv
+ID="20"
+IDENT_SLOT="clusters_pca_vst_top1000_k30_res0.1"
+TEST="MAST"
+
+CLS=( "0" "1" "2" "3" "4" )
+BLP_POS="1"
+BLP_NEG="0"
+LABEL_BLP_POS="cl$BLP_POS"
+LABEL_BLP_NEG="cl$BLP_NEG"
+
+comp="cl${BLP_POS}_cl${BLP_NEG}"
+
+LOG2FC="0.5"
+PVAL="0.05"
+PERC="0.1"
+
+
+#### input files and folders ####
+
+DIR="optimal_clustering/test7_Seurat3"
+OBJECT="$DIR/Macro/object.Robj"
+
+
+#### output files and folders ####
+
+OUT_DIR="$DIR/Macro_optimal_clustering"
+OUT_DIR_DEG="$OUT_DIR/param_set$ID/Macro"
+[[ -d $OUT_DIR_DEG ]] || mkdir -p $OUT_DIR_DEG
+
+DEG_COMP="$OUT_DIR_DEG/$TEST/DEG_$comp.tsv"
+DEG_COMP_FILT="$OUT_DIR_DEG/$TEST/DEG_${comp}_all_filtered.tsv"
+
+
+#### execution ####
+
+# compute the DEGs between all combinations
+Rscript $DEGS_ALL --object $OBJECT --out_dir $OUT_DIR_DEG --cl_mode $IDENT_SLOT --test $TEST > $OUT_DIR_DEG/DEG.STDOUT 2> $OUT_DIR_DEG/DEG.STDERR
+
+# compute the DEGs between BLP+ and BLP-
+Rscript $DEGS --object1 $OBJECT --object2 $OBJECT --ident_slot1 $IDENT_SLOT --ident_slot2 $IDENT_SLOT \
+ --out_dir $OUT_DIR_DEG --ident1 $BLP_POS --ident2 $BLP_NEG --label1 $LABEL_BLP_POS --label2 $LABEL_BLP_NEG \
+ --test $TEST --no_obj_save > $OUT_DIR_DEG/DEG_${LABEL_BLP_POS}-${LABEL_BLP_NEG}.STDOUT 2> $OUT_DIR_DEG/DEG_${LABEL_BLP_POS}-${LABEL_BLP_NEG}.STDERR
+
+# filter DEGs
+for CL in ${CLS[@]}
+do 
+	comp="cl${CL}-all"
+	DEG="$OUT_DIR_DEG/$TEST/DEG_${TEST}_$comp.tsv"
+	DEG_FILT="$OUT_DIR_DEG/$TEST/DEG_${TEST}_${comp}_all_filtered.tsv"
+	DEG_UP="$OUT_DIR_DEG/$TEST/DEG_${TEST}_${comp}_UP.tsv"
+
+	Rscript $FILTER $DEG $DEG_FILT $LOG2FC $PVAL $PERC
+	head -1 $DEG_FILT > $DEG_UP
+	grep -v gene $DEG_FILT | awk '{ if ($6 > 0) print }' >> $DEG_UP
+
+done
+
+Rscript $FILTER $DEG_COMP $DEG_COMP_FILT $LOG2FC $PVAL $PERC
+
+
+
+exit
+
+
+

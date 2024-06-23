@@ -1,0 +1,46 @@
+#!/usr/bin/bash
+
+#
+# description: merge the Seurat objects containing the 2 MP samples
+#
+# depends: COMMAND_Macro_separate_replicates_SEURAT3
+#
+
+
+#### global paths and scripts ####
+
+SCRIPT_DIR="../../../../scripts/R/seurat3_scripts/"
+MERGE_OBJ="$SCRIPT_DIR/mergeObjects.R"
+
+
+#### parameters ####
+
+cond="Macro"
+xmax="10"
+min_cells="3"
+min_genes="200"
+max_genes="4000"
+
+#### input files and folders ####
+
+OBJ_DIR="all_cells_filt_matrix_Seurat3"
+
+OBJ1="${cond}_proximal/$OBJ_DIR/object.Robj"
+OBJ2="${cond}_distal/$OBJ_DIR/object.Robj"
+
+
+#### output files and folders ####
+
+OUT_DIR="${cond}/test7_Seurat3"
+[ -d $OUT_DIR ] || mkdir $OUT_DIR
+
+
+#### execution ####
+
+
+Rscript $MERGE_OBJ --object1 $OBJ1 --object2 $OBJ2 --add_id --out_dir $OUT_DIR --min_cells $min_cells --min_genes $min_genes --max_genes $max_genes --violin_pt_size 0 --xmax $xmax \
+ > $OUT_DIR/merge.STDOUT 2> $OUT_DIR/merge.STDERR 
+
+
+exit
+

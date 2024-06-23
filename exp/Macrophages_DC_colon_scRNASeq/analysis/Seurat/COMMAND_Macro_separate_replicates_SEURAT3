@@ -1,0 +1,57 @@
+#!/usr/bin/bash
+
+#
+# description: create a Seurat object containing the cells called by CellRanger, for each MP sample separately
+#
+# depends: nothing
+#
+
+
+#### global paths and scripts ####
+
+SCRIPT_DIR="../../../../scripts/R/seurat3_scripts/"
+CREATE_OBJ="$SCRIPT_DIR/loadNormScale.R"
+
+
+#### parameters ####
+
+i="0"
+min_cells="0"
+min_genes="0"
+xmax="10"
+
+
+#### input files and folders ####
+
+files_list="files_list_Macro"
+names_list="names_list_Macro"
+[ -f "$files_list" ] || ( echo "\"$files_list\" does not exist" && exit )
+[ -f "$names_list" ] || ( echo "\"$names_list\" does not exist" && exit )
+
+names=( $(cat $names_list) )
+
+
+#### output files and folders ####
+
+# all cells reported in CellRanger filtered matrix
+OBJ_DIR="all_cells_filt_matrix_Seurat3"
+
+
+#### execution ####
+
+# no gene nor cell filtering
+for dir in $(cat $files_list)
+do
+	seurat_dir=${names[$i]//-/_}/$OBJ_DIR
+	[ -d $seurat_dir ] || mkdir -p $seurat_dir
+
+	echo "$dir" > $seurat_dir/cellranger_dir
+	echo "${names[$i]}" > $seurat_dir/sample_name
+	Rscript $CREATE_OBJ --files_list $seurat_dir/cellranger_dir --names_list $seurat_dir/sample_name --out_dir $seurat_dir --min_cells $min_cells --min_genes $min_genes --xmax $xmax \
+    > $seurat_dir/create_obj.STDOUT 2> $seurat_dir/create_obj.STDERR
+
+	i=$((i+1))
+done
+
+
+exit

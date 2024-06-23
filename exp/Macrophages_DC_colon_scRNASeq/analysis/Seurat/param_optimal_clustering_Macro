@@ -1,0 +1,9 @@
+cores=4
+xmin=0.1
+xmax=10
+disps=0.5,1,1.5
+nfeats=500,1000,2000
+k=30,40,50
+res=0.1,0.2,0.3,0.4,0.5
+gene_markers=Itgax,Calm1,Il1b,Nfkb1,Lgals3
+conditions=Macro-distal

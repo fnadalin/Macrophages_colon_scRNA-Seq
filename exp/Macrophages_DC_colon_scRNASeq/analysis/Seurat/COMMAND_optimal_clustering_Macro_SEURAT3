@@ -1,0 +1,72 @@
+#!/usr/bin/bash
+
+#
+# description: compute several clustering solutions by varying the feature selection method & the clustering parameters
+#              store the clustering results as meta.data fields in the output object
+#
+# depends: COMMAND_Macro_merged_replicates_test5_SEURAT3
+#
+
+
+#### global paths and scripts ####
+
+LOCAL_SCRIPT_DIR="../../scripts/R/Seurat3/"
+STEP0="$LOCAL_SCRIPT_DIR/workflow_optimal_clustering_merged_step0_SEURAT3.R"
+STEP1="$LOCAL_SCRIPT_DIR/workflow_optimal_clustering_merged_step1.R"
+STEP2="$LOCAL_SCRIPT_DIR/workflow_optimal_clustering_merged_step2.R"
+STEP3="$LOCAL_SCRIPT_DIR/workflow_optimal_clustering_merged_step3.R"
+
+
+#### input files and folders ####
+
+IN_DIR="Macro/test7_Seurat3"
+PARAM="param_optimal_clustering_Macro"
+
+IN_OBJ="$IN_DIR/object.Robj"
+
+
+#### output files and folders ####
+
+OUT_DIR="optimal_clustering/test7_Seurat3"
+
+FEAT_DIR="$OUT_DIR/Macro"
+SILH_DIR="$OUT_DIR/Macro_silhouette"
+EXPR_DIR="$OUT_DIR/Macro_gene_markers_expression"
+OPT_DIR="$OUT_DIR/Macro_optimal_clustering"
+
+[[ -d "$FEAT_DIR" ]] || mkdir -p "$FEAT_DIR"
+[[ -d "$SILH_DIR" ]] || mkdir -p "$SILH_DIR"
+[[ -d "$EXPR_DIR" ]] || mkdir -p "$EXPR_DIR"
+[[ -d "$OPT_DIR" ]]  || mkdir -p "$OPT_DIR"
+
+OUT_OBJ="$OUT_DIR/Macro/object.Robj"
+STAT="$OPT_DIR/opt_cl_stat.tsv"
+
+
+#### execution ####
+
+# STEP 0
+# Compute dimensional reduction on each condition separately by varying:
+# 1. feature selection method
+# 2. number of features 
+Rscript $STEP0 $IN_OBJ $FEAT_DIR $PARAM
+
+# STEP 1
+# Compute clustering on features, with or without PCA, by varying:
+# 1. number of neighbors for the clustering
+# 2. clustering resolution
+Rscript $STEP1 $OUT_OBJ $FEAT_DIR $PARAM
+
+# STEP 2
+# Validate the clusters with silhouette score
+Rscript $STEP2 $OUT_OBJ $FEAT_DIR $SILH_DIR $PARAM
+
+# STEP 3
+# Select the BLP+ cluster by computing the fraction in distal and proximal colon
+# Generate the summary table with info for each solution
+Rscript $STEP3 $OUT_OBJ $SILH_DIR $EXPR_DIR $STAT $PARAM
+
+
+exit
+
+
