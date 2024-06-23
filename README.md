@@ -5,7 +5,6 @@ This repository contains the code to reproduce the analysis reported in the arti
 Chikina *et al.* Macrophages Maintain Epithelium Integrity by Limiting Fungal Product Absorption. *Cell*, 138(2):411-428.e16, 2020. https://doi.org/10.1016/j.cell.2020.08.048.
 
 [System requirements](#system-requirements)  
-[Installation](#installation)  
 [Instructions for reproducing the analysis](#instructions-for-reproducing-the-analysis)  
 [Contact](#contact) 
 
